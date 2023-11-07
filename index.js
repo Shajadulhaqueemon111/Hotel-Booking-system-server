@@ -28,10 +28,19 @@ async function run() {
 
     const bookingCollection=client.db("HotelBooking").collection("Bookings")
     const addbookingCollection=client.db("HotelBooking").collection("books")
+    const offerbookingCollection=client.db("OfferBooking").collection("offer")
     // await client.connect();
     
     app.get('/Bookings',async(req,res)=>{
       const cursor=bookingCollection.find();
+      const result=await cursor.toArray()
+      res.send(result)
+      // res.send({
+      //   total:result.length,result
+      //  })
+    })
+    app.get('/offer',async(req,res)=>{
+      const cursor=offerbookingCollection.find();
       const result=await cursor.toArray()
       res.send(result)
       // res.send({
@@ -50,6 +59,15 @@ async function run() {
       res.send(result)
   })
 
+  app.get('/books/:id',async(req,res)=>{
+
+    const id=req.params.id;
+    const query={_id:new ObjectId(id)}
+   
+    const result=await addbookingCollection.findOne(query)
+    res.send(result)
+  })
+
   app.get('/books',async(req,res)=>{
     const cursor=addbookingCollection.find();
     const result=await cursor.toArray()
@@ -66,8 +84,54 @@ async function run() {
 app.delete('/books/:id',async(req,res)=>{
   const id=req.params.id;
   console.log(id)
-  const query={_id: id}
+  const query={_id:new ObjectId (id)}
   const result=await addbookingCollection.deleteOne(query)
+  res.send(result)
+})
+
+app.put('/books/:id',async(req,res)=>{
+  const id=req.params.id;
+  console.log(id)
+  const filter={_id:new ObjectId(id)}
+  const options = { upsert: true };
+  const upDateBooks=req.body;
+  const updateDate = {
+    $set: {
+      // description:upDateBooks.description,
+      // Roomsize:upDateBooks.Roomsize,
+      //  price:upDateBooks.price,
+      //  availability:upDateBooks.availability,
+      //  specialOffers:upDateBooks.specialOffers,
+      //  roomImages:upDateBooks.roomImages,
+       date:upDateBooks.date
+
+    },
+  
+  };
+  const result = await addbookingCollection.updateOne(filter, updateDate, options);
+  res.send(result)
+})
+
+app.put('/Bookings/:id',async(req,res)=>{
+  const id=req.params.id;
+  console.log(id)
+  const filter={_id:new ObjectId(id)}
+  const options = { upsert: true };
+  const upDateBooks=req.body;
+  const updateDate = {
+    $set: {
+      description:upDateBooks.description,
+      Roomsize:upDateBooks.Roomsize,
+       price:upDateBooks.price,
+       availability:upDateBooks.availability,
+       specialOffers:upDateBooks.specialOffers,
+       roomImages:upDateBooks.roomImages,
+      
+
+    },
+  
+  };
+  const result = await bookingCollection.updateOne(filter, updateDate, options);
   res.send(result)
 })
     await client.db("admin").command({ ping: 1 });
