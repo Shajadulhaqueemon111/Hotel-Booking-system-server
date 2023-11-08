@@ -59,12 +59,37 @@ async function run() {
     })
 
     // bookings collection
-    app.get('/Bookings',async(req,res)=>{
-      const cursor=bookingCollection.find();
-      const result=await cursor.toArray()
-      res.send(result)
+    // app.get('/Bookings',async(req,res)=>{
+    //   const cursor=bookingCollection.find();
+    //   const result=await cursor.toArray()
+    //   res.send(result)
      
-    })
+    // })
+
+    app.get('/Bookings', async (req, res) => {
+      const cursor = bookingCollection.find();
+    
+      // Check the query parameter for sorting (e.g., /Bookings?sort=asc or /Bookings?sort=desc)
+      const sortParam = req.query.sort || 'asc'; // Default to ascending order if no sort parameter is provided
+    
+      try {
+        const result = await cursor.toArray();
+    
+        // Sort the result based on the "price" field
+        if (sortParam === 'asc') {
+          result.sort((a, b) => a.price - b.price);
+        } else if (sortParam === 'desc') {
+          result.sort((a, b) => b.price - a.price);
+        }
+    
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    
     app.get('/offer',async(req,res)=>{
       const cursor=offerbookingCollection.find();
       const result=await cursor.toArray()
@@ -94,12 +119,7 @@ async function run() {
     res.send(result)
   })
   // const result=await addbookingCollection.findOne(query)
-  app.get('/books',async(req,res)=>{
-    const cursor=addbookingCollection.find();
-    console.log('tok tok ',req.cookies.token)
-    const result=await cursor.toArray()
-    res.send(result)
-  })
+  
 
 //   app.get('/books',async(req,res)=>{
 //     console.log(req.query.email)
@@ -116,35 +136,43 @@ async function run() {
 //     res.send(result)
 // })
 
-const logger=async(req,res,next)=>{
-  console.log('called:',req.host,req.originalurl)
+const logger = async (req, res, next) => {
+  console.log('called:', req.hostname, req.originalUrl); // Use req.hostname instead of req.host
   next();
-}
+};
 
-const verifyToken=async(req,res,next)=>{
-  const token=req.cookies?.token;
-  console.log('value of token in middleware',token)
-  if(!token){
-    return res.status(401).send({message:'unothorized'})
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  console.log('value of token in middleware', token);
+  if (!token) {
+    return res.status(401).send({ message: 'unauthorized' }); // Correct the typo "unothorized" to "unauthorized"
   }
-  jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
-if(err){
-  console.log(err)
-  return res.status(401).send({message:'unothorized'})
-}
-console.log('value in the token ' ,decoded)
-req.user=decoded; 
-next()
-  })
   
-}
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      console.error(err); // Change console.log to console.error for error messages
+      return res.status(401).send({ message: 'unauthorized' });
+    }
+    console.log('value in the token', decoded);
+    req.user = decoded;
+    next();
+  });
+};
 
-  app.post('/books',verifyToken,logger,async(req,res)=>{
-    const booking=req.body;
-   console.log(booking)
-   const result=await addbookingCollection.insertOne(booking)
-   res.send(result)
+app.get('/books',verifyToken, logger,async(req,res)=>{
+  const cursor=addbookingCollection.find();
+  console.log('tok tok ',req.cookies.token)
+  const result=await cursor.toArray()
+  res.send(result)
 })
+
+app.post('/books', async (req, res) => {
+  const booking = req.body;
+  console.log(booking);
+  const result = await addbookingCollection.insertOne(booking);
+  res.send(result); // You might want to send a more informative response here
+});
+
 
 app.delete('/books/:id',async(req,res)=>{
   const id=req.params.id;
