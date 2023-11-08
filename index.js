@@ -8,7 +8,11 @@ require('dotenv').config()
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-  origin:['http://localhost:5173'],
+  origin:[
+
+    'https://hotel-booking-auth-7e7bf.firebaseapp.com',
+    'https://hotel-booking-auth-7e7bf.web.app'
+  ],
   credentials:true
 }));
 app.use(express.json());
@@ -73,7 +77,7 @@ async function run() {
       const query={_id:new ObjectId(id)}
       const options = {
       
-        projection: {roomDescription: 1, price: 1,roomSize:1,availability:1,roomImages:1,specialOffers:1 },
+        projection: {roomDescription: 1,date:1, price: 1,roomSize:1,availability:1,roomImages:1,specialOffers:1 },
       };
       const result=await bookingCollection.findOne(query,options)
       res.send(result)
@@ -85,11 +89,11 @@ async function run() {
 
     const id=req.params.id;
     const query={_id:new ObjectId(id)}
-   
+    console.log(id)
     const result=await addbookingCollection.findOne(query)
     res.send(result)
   })
-
+  // const result=await addbookingCollection.findOne(query)
   app.get('/books',async(req,res)=>{
     const cursor=addbookingCollection.find();
     console.log('tok tok ',req.cookies.token)
