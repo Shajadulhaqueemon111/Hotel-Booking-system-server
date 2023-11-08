@@ -3,13 +3,16 @@ const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require("cors");
 const jwt=require('jsonwebtoken');
-
+const cookieParser = require('cookie-parser')
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin:['http://localhost:5173'],
+  credentials:true
+}));
 app.use(express.json());
-
+app.use(cookieParser())
 console.log(process.env.USER_NAME)
 console.log(process.env.USER_PASS)
 
@@ -41,9 +44,16 @@ async function run() {
       const user=req.body;
       console.log(user)
       const token=jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn:'1h'})
-      res.send(token)
+      res
+      .cookie('token',token,{
+        httpOnly:true,
+        secure:true,
+        sameSite:'none'
+      })
+      
+      .send({success:true})
     })
-    
+
     // bookings collection
     app.get('/Bookings',async(req,res)=>{
       const cursor=bookingCollection.find();
@@ -82,11 +92,50 @@ async function run() {
 
   app.get('/books',async(req,res)=>{
     const cursor=addbookingCollection.find();
+    console.log('tok tok ',req.cookies.token)
     const result=await cursor.toArray()
     res.send(result)
   })
 
-  app.post('/books',async(req,res)=>{
+//   app.get('/books',async(req,res)=>{
+//     console.log(req.query.email)
+
+//     console.log(req.cookies)
+//     console.log('user in the valid token',req.user)
+//     let query={};
+//     if(req.query?.email){
+//         query={email:req.query.email}
+
+//     }
+
+//     const result=await addbookingCollection.find(query).toArray()
+//     res.send(result)
+// })
+
+const logger=async(req,res,next)=>{
+  console.log('called:',req.host,req.originalurl)
+  next();
+}
+
+const verifyToken=async(req,res,next)=>{
+  const token=req.cookies?.token;
+  console.log('value of token in middleware',token)
+  if(!token){
+    return res.status(401).send({message:'unothorized'})
+  }
+  jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
+if(err){
+  console.log(err)
+  return res.status(401).send({message:'unothorized'})
+}
+console.log('value in the token ' ,decoded)
+req.user=decoded; 
+next()
+  })
+  
+}
+
+  app.post('/books',verifyToken,logger,async(req,res)=>{
     const booking=req.body;
    console.log(booking)
    const result=await addbookingCollection.insertOne(booking)
