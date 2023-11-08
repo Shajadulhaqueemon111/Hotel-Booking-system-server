@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require("cors");
+const jwt=require('jsonwebtoken');
+
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -28,24 +30,32 @@ async function run() {
 
     const bookingCollection=client.db("HotelBooking").collection("Bookings")
     const addbookingCollection=client.db("HotelBooking").collection("books")
+    const reviewbookingCollection=client.db("HotelBooking").collection("review")
     const offerbookingCollection=client.db("OfferBooking").collection("offer")
     // await client.connect();
     
+
+    // jwt related 
+
+    app.post('/jwt',async(req,res)=>{
+      const user=req.body;
+      console.log(user)
+      const token=jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn:'1h'})
+      res.send(token)
+    })
+    
+    // bookings collection
     app.get('/Bookings',async(req,res)=>{
       const cursor=bookingCollection.find();
       const result=await cursor.toArray()
       res.send(result)
-      // res.send({
-      //   total:result.length,result
-      //  })
+     
     })
     app.get('/offer',async(req,res)=>{
       const cursor=offerbookingCollection.find();
       const result=await cursor.toArray()
       res.send(result)
-      // res.send({
-      //   total:result.length,result
-      //  })
+     
     })
 
     app.get('/Bookings/:id',async(req,res)=>{
@@ -53,11 +63,13 @@ async function run() {
       const query={_id:new ObjectId(id)}
       const options = {
       
-        projection: {roomDescription: 1, price: 1,roomSize:1,availability:1,roomImages:1 },
+        projection: {roomDescription: 1, price: 1,roomSize:1,availability:1,roomImages:1,specialOffers:1 },
       };
       const result=await bookingCollection.findOne(query,options)
       res.send(result)
   })
+
+  // books section
 
   app.get('/books/:id',async(req,res)=>{
 
@@ -121,12 +133,12 @@ app.put('/Bookings/:id',async(req,res)=>{
   const updateDate = {
     $set: {
       description:upDateBooks.description,
-      Roomsize:upDateBooks.Roomsize,
+      roomSize:upDateBooks.roomSize,
        price:upDateBooks.price,
        availability:upDateBooks.availability,
        specialOffers:upDateBooks.specialOffers,
        roomImages:upDateBooks.roomImages,
-      
+       
 
     },
   
@@ -134,6 +146,22 @@ app.put('/Bookings/:id',async(req,res)=>{
   const result = await bookingCollection.updateOne(filter, updateDate, options);
   res.send(result)
 })
+
+// review booking 
+app.get('/review',async(req,res)=>{
+  const cursor=reviewbookingCollection.find();
+  const result=await cursor.toArray()
+  res.send(result)
+ 
+})
+
+app.post('/review',async(req,res)=>{
+  const booking=req.body;
+ console.log(booking)
+ const result=await reviewbookingCollection.insertOne(booking)
+ res.send(result)
+})
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
