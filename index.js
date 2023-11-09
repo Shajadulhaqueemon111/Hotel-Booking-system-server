@@ -9,16 +9,16 @@ const port = process.env.PORT || 5000;
 
 app.use(cors({
   origin:[
+    'http://localhost:5173'
 
-    'https://hotel-booking-auth-7e7bf.firebaseapp.com',
-    'https://hotel-booking-auth-7e7bf.web.app'
+    // 'https://hotel-booking-auth-7e7bf.firebaseapp.com',
+    // 'https://hotel-booking-auth-7e7bf.web.app'
   ],
   credentials:true
 }));
 app.use(express.json());
 app.use(cookieParser())
-console.log(process.env.USER_NAME)
-console.log(process.env.USER_PASS)
+
 
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASS}@cluster0.7auoehb.mongodb.net/?retryWrites=true&w=majority`;
 console.log(uri)
@@ -69,8 +69,8 @@ async function run() {
     app.get('/Bookings', async (req, res) => {
       const cursor = bookingCollection.find();
     
-      // Check the query parameter for sorting (e.g., /Bookings?sort=asc or /Bookings?sort=desc)
-      const sortParam = req.query.sort || 'asc'; // Default to ascending order if no sort parameter is provided
+     
+      const sortParam = req.query.sort || 'asc'; 
     
       try {
         const result = await cursor.toArray();
@@ -137,7 +137,7 @@ async function run() {
 // })
 
 const logger = async (req, res, next) => {
-  console.log('called:', req.hostname, req.originalUrl); // Use req.hostname instead of req.host
+  console.log('called:', req.hostname, req.originalUrl); 
   next();
 };
 
@@ -145,7 +145,7 @@ const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
   console.log('value of token in middleware', token);
   if (!token) {
-    return res.status(401).send({ message: 'unauthorized' }); // Correct the typo "unothorized" to "unauthorized"
+    return res.status(401).send({ message: 'unauthorized' }); 
   }
   
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
@@ -158,6 +158,12 @@ const verifyToken = async (req, res, next) => {
     next();
   });
 };
+
+app.post('/logout',async(req,res)=>{
+  const user=req.body;
+ res.clearCookie('token', { maxAge: 0, sameSite: 'none', secure: true })
+ .send({ success: true })
+})
 
 app.get('/books',verifyToken, logger,async(req,res)=>{
   const cursor=addbookingCollection.find();
