@@ -9,10 +9,10 @@ const port = process.env.PORT || 5000;
 
 app.use(cors({
   origin:[
-    'http://localhost:5173'
+   
 
-    // 'https://hotel-booking-auth-7e7bf.firebaseapp.com',
-    // 'https://hotel-booking-auth-7e7bf.web.app'
+    'https://hotel-booking-auth-7e7bf.firebaseapp.com',
+    'https://hotel-booking-auth-7e7bf.web.app'
   ],
   credentials:true
 }));
