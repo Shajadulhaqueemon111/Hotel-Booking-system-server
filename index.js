@@ -103,10 +103,14 @@ async function run() {
       const options = {
       
         projection: {roomDescription: 1,date:1, price: 1,roomSize:1,availability:1,roomImages:1,specialOffers:1 },
+     
       };
-      const result=await bookingCollection.findOne(query,options)
+      
+      const result=await bookingCollection.findOne(query)
       res.send(result)
+     
   })
+  
 
   // books section
 
@@ -118,23 +122,7 @@ async function run() {
     const result=await addbookingCollection.findOne(query)
     res.send(result)
   })
-  // const result=await addbookingCollection.findOne(query)
-  
-
-//   app.get('/books',async(req,res)=>{
-//     console.log(req.query.email)
-
-//     console.log(req.cookies)
-//     console.log('user in the valid token',req.user)
-//     let query={};
-//     if(req.query?.email){
-//         query={email:req.query.email}
-
-//     }
-
-//     const result=await addbookingCollection.find(query).toArray()
-//     res.send(result)
-// })
+ 
 
 const logger = async (req, res, next) => {
   console.log('called:', req.hostname, req.originalUrl); 
